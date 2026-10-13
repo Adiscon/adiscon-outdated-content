@@ -279,7 +279,8 @@ if ( ! class_exists( 'Adiscon_Outdated_Content' ) ) {
                     $parts = array_filter( array_map( 'trim', explode( ',', $post_types_str ) ) );
                 }
             } else {
-                $parts = array_filter( array_map( 'trim', explode( ',', (string) $defaults['post_types'] ) ) );
+                // Settings saves omit an unchecked group, so a missing key is an empty selection.
+                $parts = [];
             }
             $parts = array_values( array_unique( $parts ) );
             $parts = array_values( array_intersect( $parts, $available_types ) );
@@ -298,15 +299,11 @@ if ( ! class_exists( 'Adiscon_Outdated_Content' ) ) {
             $allowed_jsonld_types = [ 'Article', 'BlogPosting', 'NewsArticle', 'WebPage' ];
             $jsonld_types = [];
             if ( isset( $out['jsonld_type'] ) ) {
-                if ( is_array( $out['jsonld_type'] ) ) {
-                    foreach ( $out['jsonld_type'] as $t ) {
-                        $t = (string) $t;
-                        if ( in_array( $t, $allowed_jsonld_types, true ) ) {
-                            $jsonld_types[] = $t;
-                        }
-                    }
-                } else {
-                    $t = (string) $out['jsonld_type'];
+                $raw_jsonld_types = is_array( $out['jsonld_type'] )
+                    ? $out['jsonld_type']
+                    : array_map( 'trim', explode( ',', (string) $out['jsonld_type'] ) );
+                foreach ( $raw_jsonld_types as $t ) {
+                    $t = (string) $t;
                     if ( in_array( $t, $allowed_jsonld_types, true ) ) {
                         $jsonld_types[] = $t;
                     }
@@ -447,7 +444,6 @@ if ( ! class_exists( 'Adiscon_Outdated_Content' ) ) {
             }
 
             $applicable = apply_filters( 'adiscon_outdated_is_applicable', true, $post );
-            $applicable = apply_filters( 'adiscon_outdated_is_applicable', $applicable, $post );
             if ( ! $applicable ) {
                 return $content;
             }
@@ -493,7 +489,6 @@ if ( ! class_exists( 'Adiscon_Outdated_Content' ) ) {
             }
 
             $state = apply_filters( 'adiscon_outdated_state', $state, $post, $age_months, $warn_months, $danger_months );
-            $state = apply_filters( 'adiscon_outdated_state', $state, $post, $age_months, $warn_months, $danger_months );
             if ( $state === 'none' ) {
                 return $content;
             }
@@ -507,7 +502,6 @@ if ( ! class_exists( 'Adiscon_Outdated_Content' ) ) {
                 '{company}'        => 'Adiscon',
             ];
             $tokens = apply_filters( 'adiscon_outdated_tokens', $tokens, $post );
-            $tokens = apply_filters( 'adiscon_outdated_tokens', $tokens, $post );
 
             $label_template = '';
             if ( $custom_label !== '' ) {
@@ -516,7 +510,6 @@ if ( ! class_exists( 'Adiscon_Outdated_Content' ) ) {
                 $label_template = $state === 'danger' ? $opts['label_danger'] : $opts['label_warn'];
             }
             $label = strtr( $label_template, $tokens );
-            $label = apply_filters( 'adiscon_outdated_notice_text', $label, $state, $post, $age_months, $published_date );
             $label = apply_filters( 'adiscon_outdated_notice_text', $label, $state, $post, $age_months, $published_date );
 
             $use_theme_styling = apply_filters( 'adiscon_outdated_use_theme_styling', ! empty( $opts['theme_styling'] ) );
@@ -606,14 +599,14 @@ if ( ! class_exists( 'Adiscon_Outdated_Content' ) ) {
             if ( $post->post_type === 'revision' ) {
                 return;
             }
-            $data = isset( $_POST['aoc'] ) && is_array( $_POST['aoc'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['aoc'] ) ) : [];
-            $state = isset( $data['state'] ) ? sanitize_text_field( (string) $data['state'] ) : '';
+            $data = isset( $_POST['aoc'] ) && is_array( $_POST['aoc'] ) ? wp_unslash( $_POST['aoc'] ) : [];
+            $state = isset( $data['state'] ) && is_string( $data['state'] ) ? sanitize_text_field( $data['state'] ) : '';
             if ( ! in_array( $state, [ '', 'hide', 'warn', 'danger' ], true ) ) {
                 $state = '';
             }
-            $threshold = isset( $data['threshold'] ) ? intval( $data['threshold'] ) : 0;
+            $threshold = isset( $data['threshold'] ) && is_scalar( $data['threshold'] ) ? intval( $data['threshold'] ) : 0;
             $threshold = max( 0, $threshold );
-            $label = isset( $data['label'] ) ? $this->sanitize_label( $data['label'] ) : '';
+            $label = isset( $data['label'] ) && is_string( $data['label'] ) ? $this->sanitize_label( $data['label'] ) : '';
 
             if ( $state === '' ) {
                 delete_post_meta( $post_id, 'ocb_state' );
