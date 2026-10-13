@@ -1,0 +1,21 @@
+adiscon-outdated-content.php
+  s_d9f5503c4fd368::t_63e11e15c769e1 282-283
+  s_d9f5503c4fd368::t_8334acb24c5582 602-603,607,609
+  s_d9f5503c4fd368::t_28fade4e28d63b 302-306
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "666d1c17ce5bdd7b78b9390f064ea465cdae0f24",
+  "prompts": {},
+  "sessions": {
+    "s_d9f5503c4fd368": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "2fc55f7d-609a-47b9-994f-2c7172397e42",
+        "model": "grok-4.7"
+      },
+      "human_author": "Andre Lorbach <alorbach@adiscon.com>"
+    }
+  }
+}
